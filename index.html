@@ -45,12 +45,37 @@
         </form>
     </dialog>
 
-    <!-- dialog - update post -->
-    <!-- to do  -->
+    <dialog id="dialog-update-post"> <!--nyt html tag, får det til at gå ud af skærmen og slørre baggrunden.
+    Den har js funktioner på sig automatisk. Men man skal have en queryselector showModel() på for at den vises-->
+        <h2>Update post</h2>
+        <form id="form-update-post" method="dialog">
+            <label for="title"></label> <!-- for="": hvem høre den label til? id på input-->
+            <input id="title-update" type="text" name="title" placeholder="New title">
+            <label for="body"></label>
+            <input id="body-update" type="text" name="body" placeholder="New body content">
+            <label for="image"></label>
+            <input id="image-update" type="url" name="image" placeholder="Image url">
+            <button id="update-button-cancel" type="button">Cancel</button>
+            <!--skal have type på ellers submitter den formen. Er der type på submitter den ikke,
+            så kan den gøre noget andet, som her at lukke modalen
+            type på den der submitter er submit og det er default så man behøver ikke skrive det-->
+            <button>Update</button>
+        </form>
+    </dialog>
 
 
     <!-- dialog - delete post -->
     <!-- to do  -->
+    <dialog id="dialog-delete-post">
+        <h2>Do you want to delete post?</h2>
+        <p id="dialog-delete-post-title">Post title placeholder</p>
+        <form id="form-delete-post" method="dialog">
+            <button>Yes</button> <!-- default button type er submit.-->
+            <button type="button">No</button> <!-- vi specifier submit type for no, da den ellers submitter, og vi vil have den ikke submiter-->
+        </form>
+    </dialog>
+
+
 
     <script src="app.js"></script>
 </body>

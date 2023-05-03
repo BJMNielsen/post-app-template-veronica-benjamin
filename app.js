@@ -3,7 +3,7 @@
 //beskrivelse af projektet
 
 // ============== global variables ============== //
-const endpoint = "http://post-rest-api-default-rtdb.firebaseio.com/"; //firebase er db, app backend og alt muligt
+const endpoint = "https://post-rest-api-default-rtdb.firebaseio.com/"; //firebase er db, app backend og alt muligt
 let posts;
 
 // ============== load and init app ============== //
@@ -15,37 +15,46 @@ function initApp() {
     updatePostsGrid(); // update the grid of posts: get and show all posts
 
     // event listener
-    document
-        .querySelector("#btn-create-post")
-        .addEventListener("click", showCreatePostDialog);
+    document.querySelector("#btn-create-post").addEventListener("click", showCreatePostDialog);
     document.querySelector("#button-cancel").addEventListener("click", closeCreatePostDialog);
     document.querySelector("#form-create-post").addEventListener("submit", createPostClicked);
+    document.querySelector("#form-delete-post").addEventListener("submit", deletePostClicked);
+    document.querySelector("#form-delete-post").addEventListener("click", closeDeleteDialog)
+    document.querySelector("#form-update-post").addEventListener("submit", updatePostClicked)
 }
 
 // ============== events ============== //
 
-function createPostClicked(event){
+function createPostClicked(event) {
     console.log(event.target) //poster man eventet uden target er det noget alt muligt mærkeligt
-
+    console.log(event)
+    // Target er derfra hvor event kommer. Det er en submit event fra vores formular.
     //target er DOM elementet som affyrer eventet, det er et DOM objekt, her DOM elementet form
     //poster man med target får man formen og hvad der er inde i den
-    const form = event.target //tager hele objektet
-    const title = form.title.value //name i html er title, vi bruger name til at referere til ting i objektet
+    const form = event.target //tager hele objektet som er vores form vi udfylder. Vi kunne basically også bare få fat i formen med queryselector.
+    const title = form.title.value //name i html er title, vi bruger name til at referere til ting i objektet. Vi bruger ikke id, men name når det er en form.
     //const title = event.target.title.value - samme
     //når browseren læser html omformulere den det til DOM - objektrepræsentation af html
     //js manipulere ikke html men DOM'en
     const body = form.body.value
     const image = form.image.value
     console.log(title)
+    console.log(body)
+    console.log(image)
 
+    // Vi har så lavet en createPost metode vi sender vores objekter over til.
     createPost(title, body, image)
+
+    form.reset();
 }
 
-
-function closeCreatePostDialog(){
+// vi finder dialogen og lukker den.
+function closeCreatePostDialog() {
     document.querySelector("#dialog-create-post").close();
-
-
+}
+// vi finder dialogen og lukker den.
+function closeDeleteDialog() {
+    document.querySelector("#dialog-delete-post").close();
 }
 
 function showCreatePostDialog() {
@@ -58,9 +67,26 @@ function showCreatePostDialog() {
     //uden at man behøver submitte formen
 }
 
-// todo
+async function deletePostClicked(event){
+    const form = event.target;
+    const id = form.getAttribute("data-id");
+    console.log(id);
+    await deletePost(id);
+}
 
-// ============== posts ============== //
+function updatePostClicked(event) {
+    const form = event.target //tager hele objektet som er vores form vi udfylder. Vi kunne basically også bare få fat i formen med queryselector.
+
+    const title = form.title.value //name i html er title, vi bruger name til at referere til ting i objektet. Vi bruger ikke id, men name når det er en form.
+    const body = form.body.value
+    const image = form.image.value
+
+    const id = form.getAttribute("data-id");
+
+    updatePost(id, title, body, image);
+}
+
+
 
 async function updatePostsGrid() {
     posts = await getPosts(); // get posts from rest endpoint and save in global variable
@@ -77,7 +103,6 @@ async function getPosts() {
 
 function showPosts(listOfPosts) {
     document.querySelector("#posts").innerHTML = ""; // reset the content of section#posts
-
     for (const post of listOfPosts) { //hvilket loop skal man bruge?
         showPost(post); // for every post object in listOfPosts, call showPost
     }
@@ -101,64 +126,88 @@ function showPost(postObject) {
     //document.querySelector("posts").innerHTML+=html
 
     // add event listeners to .btn-delete and .btn-update
-    document
-        .querySelector("#posts article:last-child .btn-delete")
-        .addEventListener("click", deleteClicked);//queryselector fungere på samme måde som css hiearki
+    document.querySelector("#posts article:last-child .btn-delete").addEventListener("click", deleteClicked);
+    //queryselector fungere på samme måde som css hiearki
     //man kunne gøre det samem med id, her går vi bare gennem css hierarki for at få fat i et element
-    document
-        .querySelector("#posts article:last-child .btn-update")
-        .addEventListener("click", updateClicked);
+    document.querySelector("#posts article:last-child .btn-update").addEventListener("click", updateClicked);
     //eventlisteners er i loop her
-
     // called when delete button is clicked
+    // nested function
     function deleteClicked() {
         console.log("Delete button clicked");
         // to do
+        console.log(postObject.id)
+        document.querySelector("#dialog-delete-post-title").textContent = postObject.title;
+        document.querySelector("#form-delete-post").setAttribute("data-id", postObject.id); // Det vi gør her er at vi sætter den post vi deleters ID ind som en attribute på HTML formen der hedder form-delete-post.
+        // data er det tag man bruger til det. Man kalder det så typisk data"-id".
+        document.querySelector("#dialog-delete-post").showModal();
     }
 
     // called when update button is clicked
+    // nested function
     function updateClicked() {
         console.log("Update button clicked");
         // to do
+        console.log(postObject)
+        const form = document.querySelector("#form-update-post");
+        form.title.value = postObject.title;
+        form.body.value = postObject.body;
+        form.image.value = postObject.image;
+        form.setAttribute("data-id", postObject.id);
+        document.querySelector("#dialog-update-post").showModal();
+
     }
 }
 
 // Create a new post - HTTP Method: POST
+// convert the JS object to JSON string
+// POST fetch request with JSON in the body
+// Fetch er altid en http request.
+// check if response is ok - if the response is successful
+// update the post grid to display all posts and the new post
+
 async function createPost(title, body, image) {
-    // create new post object
-    // convert the JS object to JSON string
-    // POST fetch request with JSON in the body
-    // check if response is ok - if the response is successful
-    // update the post grid to display all posts and the new post
-
+    // create new post object som vi gemmer i en konstant vi kalder newPost. Vi bruger den title, body og image vi lige fik fra formen.
     const newPost = {title: title, body: body, image: image}
-    console.log(newPost)
+    console.log(newPost) // newPost objekt udskriver vi.
+    const objectAsJson = JSON.stringify(newPost)
+    console.log(objectAsJson)
+    const response = await fetch(`${endpoint}/posts.json`, {method: "POST", body: objectAsJson})
 
-    const json = JSON.stringify(newPost)
-    console.log(json)
-
-    const response = await fetch(`${endpoint}/posts.json`, {method: "POST", body: json})
-    //body er http body, det er det som bliver sendt til serveren
-
-    if (response.ok){
-        updatePostsGrid()
+    if (response.ok) {
+        await updatePostsGrid() // Henter bare hele listen af Posts igen, dvs refresher siden.
+        // Hvis serveren giver status 200.OK, kalder vi metoden updatePostsGrid().
     }
 }
 
-// Update an existing post - HTTP Method: DELETE
+// DELETE fetch request
+// check if response is ok - if the response is successful
+// update the post grid to display posts
+
 async function deletePost(id) {
-    // DELETE fetch request
-    // check if response is ok - if the response is successful
-    // update the post grid to display posts
+    const response = await fetch(`${endpoint}/posts/${id}.json`, {method: "DELETE"});
+    if (response.ok) {
+        await updatePostsGrid(); // Henter bare hele listen af Posts igen, dvs refresher siden.
+    }
 }
 
-// Delete an existing post - HTTP Method: PUT
+// post update to update
+// convert the JS object to JSON string
+// PUT fetch request with JSON in the body. Calls the specific element in resource
+// check if response is ok - if the response is successful
+// update the post grid to display all posts and the new post
+
 async function updatePost(id, title, body, image) {
-    // post update to update
-    // convert the JS object to JSON string
-    // PUT fetch request with JSON in the body. Calls the specific element in resource
-    // check if response is ok - if the response is successful
-    // update the post grid to display all posts and the new post
+
+    const post = { title, body, image };
+    const postAsJson = JSON.stringify(post);
+    const response = await fetch(`${endpoint}/posts/${id}.json`, {method: "PUT", body: postAsJson});
+    console.log(response)
+
+    if (response.ok) {
+        await updatePostsGrid(); // Henter bare hele listen af Posts igen, dvs refresher siden.
+    }
+
 }
 
 // ============== helper function ============== //
